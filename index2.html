@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="author" content="Шерматов Сүйүнбек">
+  <title>INTELLECT IT & Business College — Task Tracker</title>
+  
+  <!-- PWA & Mobile App Settings -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0000cc">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Intellect Tasks">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --intellect-blue: #0000cc;
+      --intellect-blue-dark: #00008b;
+      --intellect-blue-light: #2563eb;
+      --accent-red: #dc2626;
+      --accent-red-soft: #fee2e2;
+      --bg-main: #f4f6fa;
+      --card-bg: #ffffff;
+      --text-main: #0a0f1d;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success-bg: #ecfdf5;
+      --success-text: #065f46;
+      --success-btn: #10b981;
+      --warning-bg: #fffbeb;
+      --warning-text: #92400e;
+      --warning-btn: #f59e0b;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-card: 0 4px 12px -2px rgba(0, 0, 204, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg-main); color: var(--text-main); padding: 12px; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 600px; margin: 0 auto; }
+
+    /* Шапка Intellect */
+    .brand-header {
+      background: linear-gradient(135deg, var(--intellect-blue) 0%, var(--intellect-blue-dark) 100%);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #ffffff;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 14px;
+    }
+    .brand-logo-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #ffffff;
+      padding: 3px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-logo-svg { width: 100%; height: 100%; border-radius: 50%; }
+    .brand-info { flex: 1; }
+    .brand-title { font-size: 16px; font-weight: 900; letter-spacing: 0.5px; line-height: 1.1; }
+    .brand-sub { font-size: 10px; opacity: 0.9; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.8px; color: #cbd5e1; font-weight: 600; }
+    
+    .btn-edupage {
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(4px);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      white-space: nowrap;
+    }
+
+    .user-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .user-panel-btns { display: flex; gap: 6px; }
+    .btn-profile-gear {
+      background: #f1f5f9;
+      color: var(--intellect-blue);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-logout {
+      background: #f1f5f9;
+      color: var(--accent-red);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      width: auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 12px;
+    }
+    .card label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+
+    select, input, textarea {
+      width: 100%;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      outline: none;
+    }
+    select:focus, input:focus, textarea:focus { border-color: var(--intellect-blue); background: #ffffff; }
+
+    .filter-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
+    .filter-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .filter-btn.active { background: var(--intellect-blue); color: #ffffff; border-color: var(--intellect-blue); }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-main { background: var(--intellect-blue); color: #ffffff; }
+    .btn-done { background: var(--success-btn); color: #ffffff; flex: 1; }
+    .btn-delay { background: var(--warning-btn); color: #ffffff; flex: 1; }
+
+    .task-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 10px;
+    }
+    .task-card.is-overdue { border-left: 4px solid var(--accent-red); }
+    .task-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .task-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .task-title { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    .task-desc { font-size: 13px; color: #475569; line-height: 1.4; margin-bottom: 10px; }
+
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-pending { background: #f1f5f9; color: #475569; }
+    .badge-done { background: var(--success-bg); color: var(--success-text); }
+    .badge-delayed { background: var(--warning-bg); color: var(--warning-text); }
+    .badge-overdue { background: var(--accent-red-soft); color: var(--accent-red); }
+
+    .history-card {
+      background: #fffdf5;
+      border-left: 3px solid var(--warning-btn);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+
+    .btn-actions { display: flex; gap: 8px; }
+
+    /* Формы авторизации */
+    .auth-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+    }
+    .auth-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--intellect-blue-light);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Футер */
+    .app-footer {
+      text-align: center;
+      padding: 20px 10px 10px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .app-footer b { color: var(--intellect-blue); }
+
+    /* Модальные окна */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 139, 0.45);
+      backdrop-filter: blur(3px);
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal.active { display: flex; }
+    .sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 600px;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+      animation: slideIn 0.22s ease-out;
+    }
+    @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Шапка Intellect IT & Business College -->
+  <div class="brand-header">
+    <div class="brand-logo-wrap">
+      <svg class="brand-logo-svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="20" fill="#0000cc"/>
+        <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="52" font-weight="900">I</text>
+      </svg>
+    </div>
+    <div class="brand-info">
+      <div class="brand-title">INTELLECT</div>
+      <div class="brand-sub">IT & Business College</div>
+    </div>
+    <a href="https://intellectschool.edupage.org/" target="_blank" class="btn-edupage">📅 EduPage</a>
+  </div>
+
+  <!-- Блок Авторизации -->
+  <div id="authSection" class="auth-box">
+    <h2 id="authTitle" style="font-size:16px; font-weight:700; color:var(--intellect-blue); margin-bottom:12px; text-align:center;">Вход в систему</h2>
+    
+    <div id="regFields" style="display:none;">
+      <label>ВАШЕ ФИО И ДОЛЖНОСТЬ:</label>
+      <input type="text" id="regDisplayName" placeholder="Например: Асанов Б. (Преподаватель)">
+      
+      <label>РОЛЬ В СИСТЕМЕ:</label>
+      <select id="regRole">
+        <option value="staff">Преподаватель / Сотрудник</option>
+        <option value="director">Директор колледжа</option>
+      </select>
+    </div>
+
+    <label>EMAIL / ЛОГИН:</label>
+    <input type="email" id="authEmail" placeholder="example@intellect.edu.kg" required />
+
+    <label>ПАРОЛЬ:</label>
+    <input type="password" id="authPassword" placeholder="••••••••" required />
+
+    <button type="button" class="btn-main" id="btnAuthAction" onclick="handleAuth()">Войти</button>
+    <div class="auth-toggle" id="authToggleText" onclick="toggleAuthMode()">Нет аккаунта? Зарегистрироваться</div>
+  </div>
+
+  <!-- Основной интерфейс -->
+  <div id="appSection" style="display:none;">
+    
+    <div class="user-panel">
+      <div>
+        👤 <b id="userLabel">...</b> 
+        <span id="userRoleBadge" class="badge badge-pending" style="margin-left:4px;"></span>
+      </div>
+      <div class="user-panel-btns">
+        <button class="btn-profile-gear" onclick="openProfileSheet()" title="Настройки профиля">⚙️ Профиль</button>
+        <button class="btn-logout" onclick="logout()">Выйти</button>
+      </div>
+    </div>
+
+    <!-- Блок создания поручений для Директора -->
+    <div class="card" id="directorBlock" style="display:none;">
+      <h2 style="font-size:15px; font-weight:700; color:var(--intellect-blue); margin-bottom:10px;">➕ Новое поручение директора</h2>
+      <form id="taskCreateForm" onsubmit="createTask(event)">
+        <input type="text" id="tTitle" placeholder="Тема поручения..." required />
+        <label>ОТВЕТСТВЕННЫЙ СОТРУДНИК:</label>
+        <select id="tAssignee" required></select>
+        <label>СРОК СДАЧИ (ДЕДЛАЙН):</label>
+        <input type="date" id="tDeadline" required />
+        <textarea id="tDesc" rows="2" placeholder="Детали, указания и требования к результату..."></textarea>
+        <button type="submit" class="btn-main">Назначить поручение</button>
+      </form>
+    </div>
+
+    <!-- Вкладки фильтров -->
+    <div class="filter-tabs">
+      <button class="filter-btn active" onclick="setFilter('all', this)">Все (<span id="cntAll">0</span>)</button>
+      <button class="filter-btn" onclick="setFilter('pending', this)">В работе (<span id="cntPending">0</span>)</button>
+      <button class="filter-btn" onclick="setFilter('overdue', this)" style="color:var(--accent-red);">Просрочено (<span id="cntOverdue">0</span>)</button>
+      <button class="filter-btn" onclick="setFilter('done', this)">Выполнено (<span id="cntDone">0</span>)</button>
+      <button class="filter-btn" onclick="setFilter('logs', this)" style="background:#fff7ed; color:#c2410c;">📜 Журнал логов (<span id="cntLogs">0</span>)</button>
+    </div>
+
+    <div id="tasksList"></div>
+  </div>
+
+  <!-- Футер -->
+  <footer class="app-footer">
+    <div>INTELLECT IT & Business College © 2026</div>
+    <div>Разработано: <b>Шерматов Сүйүнбек</b></div>
+  </footer>
+
+</div>
+
+<!-- Шторка настроек профиля -->
+<div class="modal" id="profileSheet">
+  <div class="sheet">
+    <h3 style="font-size: 16px; font-weight: 700; color:var(--intellect-blue); margin-bottom: 12px;">⚙️ Мой профиль</h3>
+    
+    <label>ИЗМЕНИТЬ ФИО / ДОЛЖНОСТЬ:</label>
+    <input type="text" id="profileNameVal" placeholder="Введите новое ФИО..." />
+    <button type="button" class="btn-main" onclick="updateDisplayName()" style="margin-bottom:14px;">Сохранить ФИО</button>
+
+    <label>БЕЗОПАСНОСТЬ (ПАРОЛЬ):</label>
+    <button type="button" onclick="sendPasswordReset()" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; margin-bottom:10px;">
+      🔑 Отправить ссылку для сброса пароля на Email
+    </button>
+    
+    <button type="button" onclick="requestNotificationAccess()" style="background:#f1f5f9; color:#334155; margin-bottom:12px;">
+      🔔 Включить push-уведомления
+    </button>
+
+    <button type="button" onclick="closeProfileSheet()" style="background: #e2e8f0; color: #475569;">Закрыть</button>
+  </div>
+</div>
+
+<!-- Шторка переноса дедлайна -->
+<div class="modal" id="delaySheet">
+  <div class="sheet">
+    <h3 style="font-size: 16px; font-weight: 700; color:var(--intellect-blue); margin-bottom: 10px;">⚠️ Фиксация причины переноса</h3>
+    <form id="delayForm" onsubmit="saveDelay(event)">
+      <input type="hidden" id="delayId" />
+      <label>Новый дедлайн:</label>
+      <input type="date" id="newDateVal" required />
+      <label>Причина невыполнения в срок (обязательно):</label>
+      <textarea id="reasonVal" rows="3" placeholder="Укажите объективную причину задержки..." required></textarea>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" onclick="closeDelaySheet()" style="background: #e2e8f0; color: #475569;">Отмена</button>
+        <button type="submit" class="btn-delay">Зафиксировать</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDLLYFRPMYJNVdvC-6CYGebzSy0HdNFBWo",
+    authDomain: "intellect-college-tasks.firebaseapp.com",
+    projectId: "intellect-college-tasks",
+    storageBucket: "intellect-college-tasks.firebasestorage.app",
+    messagingSenderId: "779650854729",
+    appId: "1:779650854729:web:0ccc47463120c332663498"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let currentUserProfile = null;
+  let isRegisterMode = false;
+  let currentFilter = 'all';
+  let tasks = [];
+  let allUsers = [];
+  let isInitialLoad = true;
+
+  function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById("authTitle").textContent = isRegisterMode ? "Регистрация сотрудника" : "Вход в систему";
+    document.getElementById("btnAuthAction").textContent = isRegisterMode ? "Зарегистрироваться" : "Войти";
+    document.getElementById("regFields").style.display = isRegisterMode ? "block" : "none";
+    document.getElementById("authToggleText").textContent = isRegisterMode ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
+  }
+
+  async function handleAuth() {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value.trim();
+
+    if (!email || !password) {
+      alert("Пожалуйста, заполните email и пароль");
+      return;
+    }
+
+    try {
+      if (isRegisterMode) {
+        const name = document.getElementById("regDisplayName").value.trim();
+        const role = document.getElementById("regRole").value;
+
+        if (!name) {
+          alert("Введите ваше ФИО");
+          return;
+        }
+
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        await db.collection("users").doc(user.uid).set({
+          name: name,
+          email: email,
+          role: role,
+          createdAt: Date.now()
+        });
+
+      } else {
+        await auth.signInWithEmailAndPassword(email, password);
+      }
+    } catch (err) {
+      alert("Ошибка: " + err.message);
+    }
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (userDoc.exists) {
+        currentUserProfile = { uid: user.uid, ...userDoc.data() };
+      } else {
+        currentUserProfile = { uid: user.uid, name: user.email, role: 'staff' };
+      }
+
+      document.getElementById("authSection").style.display = "none";
+      document.getElementById("appSection").style.display = "block";
+      document.getElementById("userLabel").textContent = currentUserProfile.name;
+      document.getElementById("userRoleBadge").textContent = currentUserProfile.role === 'director' ? 'Директор' : 'Преподаватель';
+      
+      initAppListeners();
+    } else {
+      currentUserProfile = null;
+      document.getElementById("authSection").style.display = "block";
+      document.getElementById("appSection").style.display = "none";
+    }
+  });
+
+  function openProfileSheet() {
+    document.getElementById("profileNameVal").value = currentUserProfile.name || "";
+    document.getElementById("profileSheet").classList.add("active");
+  }
+
+  function closeProfileSheet() {
+    document.getElementById("profileSheet").classList.remove("active");
+  }
+
+  async function updateDisplayName() {
+    const newName = document.getElementById("profileNameVal").value.trim();
+    if (!newName) return alert("ФИО не может быть пустым");
+
+    try {
+      await db.collection("users").doc(currentUserProfile.uid).update({ name: newName });
+      currentUserProfile.name = newName;
+      document.getElementById("userLabel").textContent = newName;
+      alert("✅ Ваше ФИО успешно обновлено!");
+      closeProfileSheet();
+      renderApp();
+    } catch (err) {
+      alert("Ошибка при сохранении: " + err.message);
+    }
+  }
+
+  async function sendPasswordReset() {
+    try {
+      await auth.sendPasswordResetEmail(auth.currentUser.email);
+      alert(`✅ Ссылка для смены пароля отправлена на почту:\n${auth.currentUser.email}`);
+    } catch (err) {
+      alert("Ошибка: " + err.message);
+    }
+  }
+
+  function requestNotificationAccess() {
+    if ("Notification" in window) {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          alert("✅ Push-уведомления успешно включены!");
+          new Notification("Intellect Tasks", {
+            body: "Уведомления о новых задачах активны.",
+            icon: "icon.svg"
+          });
+        } else {
+          alert("Уведомления заблокированы в настройках браузера.");
+        }
+      });
+    } else {
+      alert("Ваш браузер не поддерживает Push-уведомления.");
+    }
+  }
+
+  function showNewTaskNotification(task) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("🚨 Новое поручение директора!", {
+        body: `${task.title}\nДедлайн: ${task.deadline}`,
+        icon: "icon.svg"
+      });
+    }
+  }
+
+  function initAppListeners() {
+    const isDirector = (currentUserProfile.role === 'director');
+    document.getElementById("directorBlock").style.display = isDirector ? "block" : "none";
+
+    if (isDirector) {
+      db.collection("users").onSnapshot(snapshot => {
+        allUsers = [];
+        const select = document.getElementById("tAssignee");
+        select.innerHTML = "";
+        snapshot.forEach(doc => {
+          const u = doc.data();
+          allUsers.push(u);
+          select.innerHTML += `<option value="${u.name}">${u.name} (${u.email})</option>`;
+        });
+      });
+    }
+
+    db.collection("tasks").onSnapshot(snapshot => {
+      const newTasks = [];
+      
+      snapshot.docChanges().forEach(change => {
+        if (change.type === "added" && !isInitialLoad) {
+          const t = change.doc.data();
+          if (currentUserProfile && t.assignee === currentUserProfile.name) {
+            showNewTaskNotification(t);
+          }
+        }
+      });
+
+      snapshot.forEach(doc => {
+        newTasks.push({ id: doc.id, ...doc.data() });
+      });
+
+      tasks = newTasks;
+      tasks.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      isInitialLoad = false;
+      renderApp();
+    });
+  }
+
+  function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderApp();
+  }
+
+  function isOverdue(deadlineStr, status) {
+    if (status === "done") return false;
+    const today = new Date().toISOString().split("T")[0];
+    return deadlineStr < today;
+  }
+
+  function renderApp() {
+    if (!currentUserProfile) return;
+
+    const isDirector = (currentUserProfile.role === 'director');
+    const baseList = isDirector ? tasks : tasks.filter(t => t.assignee === currentUserProfile.name);
+
+    let totalLogsCount = 0;
+    baseList.forEach(t => { if (t.history) totalLogsCount += t.history.length; });
+
+    document.getElementById("cntAll").textContent = baseList.length;
+    document.getElementById("cntPending").textContent = baseList.filter(t => t.status !== "done").length;
+    document.getElementById("cntOverdue").textContent = baseList.filter(t => isOverdue(t.deadline, t.status)).length;
+    document.getElementById("cntDone").textContent = baseList.filter(t => t.status === "done").length;
+    document.getElementById("cntLogs").textContent = totalLogsCount;
+
+    const container = document.getElementById("tasksList");
+    container.innerHTML = "";
+
+    if (currentFilter === 'logs') {
+      let logsHtml = "";
+      baseList.forEach(t => {
+        if (t.history && t.history.length > 0) {
+          t.history.forEach(h => {
+            logsHtml += `
+              <div class="task-card" style="border-left: 4px solid var(--warning-btn);">
+                <div class="task-top">
+                  <span>👤 <b>${t.assignee}</b></span>
+                  <span>📅 Зафиксировано: <b>${h.date}</b></span>
+                </div>
+                <div class="task-title" style="margin-bottom:6px;">${t.title}</div>
+                <div class="history-card">
+                  <b>Срок перенесен:</b> с ${h.oldDate} ➔ на <b>${h.newDate}</b><br>
+                  <b>Причина:</b> <i>${h.reason}</i>
+                </div>
+              </div>
+            `;
+          });
+        }
+      });
+
+      if (!logsHtml) {
+        container.innerHTML = `<div style="background:#fff; border:1px solid var(--border); border-radius:14px; padding:24px; text-align:center; color:var(--text-muted); font-size:13px;">Журнал переносов пуст</div>`;
+      } else {
+        container.innerHTML = logsHtml;
+      }
+      return;
+    }
+
+    let displayTasks = baseList;
+    if (currentFilter === 'pending') displayTasks = baseList.filter(t => t.status !== 'done');
+    if (currentFilter === 'overdue') displayTasks = baseList.filter(t => isOverdue(t.deadline, t.status));
+    if (currentFilter === 'done') displayTasks = baseList.filter(t => t.status === 'done');
+
+    if (displayTasks.length === 0) {
+      container.innerHTML = `<div style="background:#fff; border:1px solid var(--border); border-radius:14px; padding:24px; text-align:center; color:var(--text-muted); font-size:13px;">Нет поручений в этой категории</div>`;
+      return;
+    }
+
+    displayTasks.forEach(t => {
+      const overdue = isOverdue(t.deadline, t.status);
+      let badge = `<span class="badge badge-pending">В процессе</span>`;
+      if (t.status === "done") badge = `<span class="badge badge-done">✓ Выполнено</span>`;
+      else if (overdue) badge = `<span class="badge badge-overdue">🚨 Просрочено</span>`;
+      else if (t.status === "delayed") badge = `<span class="badge badge-delayed">Перенесено</span>`;
+
+      let historyLog = "";
+      if (t.history && t.history.length > 0) {
+        historyLog = t.history.map(h => `
+          <div class="history-card">
+            <b>📜 Лог переноса (на ${h.newDate}):</b><br>
+            <i>Причина: ${h.reason}</i>
+          </div>
+        `).join("");
+      }
+
+      let actionButtons = "";
+      if (t.status !== "done") {
+        actionButtons = `
+          <div class="btn-actions">
+            <button class="btn-done" onclick="finishTask('${t.id}')">Выполнил</button>
+            <button class="btn-delay" onclick="openDelaySheet('${t.id}')">Не выполнил</button>
+          </div>
+        `;
+      }
+
+      const card = document.createElement("div");
+      card.className = `task-card ${overdue ? 'is-overdue' : ''}`;
+      card.innerHTML = `
+        <div class="task-top">
+          <span>👤 <b>${t.assignee}</b></span>
+          <span>📅 Дедлайн: <b>${t.deadline}</b></span>
+        </div>
+        <div class="task-title-row">
+          <div class="task-title">${t.title}</div>
+          <div>${badge}</div>
+        </div>
+        <div class="task-desc">${t.desc || "Без описания"}</div>
+        ${historyLog}
+        ${actionButtons}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function createTask(e) {
+    e.preventDefault();
+    const newTask = {
+      title: document.getElementById("tTitle").value,
+      assignee: document.getElementById("tAssignee").value,
+      deadline: document.getElementById("tDeadline").value,
+      desc: document.getElementById("tDesc").value,
+      status: "pending",
+      history: [],
+      createdAt: Date.now()
+    };
+    db.collection("tasks").add(newTask);
+    document.getElementById("taskCreateForm").reset();
+  }
+
+  function finishTask(id) {
+    db.collection("tasks").doc(id).update({ status: "done" });
+  }
+
+  function openDelaySheet(id) {
+    document.getElementById("delayId").value = id;
+    document.getElementById("delaySheet").classList.add("active");
+  }
+
+  function closeDelaySheet() {
+    document.getElementById("delaySheet").classList.remove("active");
+    document.getElementById("delayForm").reset();
+  }
+
+  function saveDelay(e) {
+    e.preventDefault();
+    const id = document.getElementById("delayId").value;
+    const newDate = document.getElementById("newDateVal").value;
+    const reason = document.getElementById("reasonVal").value;
+
+    const t = tasks.find(x => x.id === id);
+    if (t) {
+      const history = t.history || [];
+      history.push({
+        oldDate: t.deadline,
+        newDate: newDate,
+        reason: reason,
+        date: new Date().toLocaleDateString()
+      });
+
+      db.collection("tasks").doc(id).update({
+        deadline: newDate,
+        status: "delayed",
+        history: history
+      });
+      closeDelaySheet();
+    }
+  }
+</script>
+
+</body>
+</html>
