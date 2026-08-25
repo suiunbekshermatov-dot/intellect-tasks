@@ -1,0 +1,17 @@
+{
+  "name": "Intellect College Tasks",
+  "short_name": "Intellect Tasks",
+  "description": "Система учета и контроля поручений Intellect IT & Business College",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0000cc",
+  "theme_color": "#0000cc",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
